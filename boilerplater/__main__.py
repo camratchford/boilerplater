@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from pprint import pformat
 from typing import Annotated
 
 from click import Choice
@@ -142,7 +143,8 @@ def main(
         )
         category_value = run_form({"category": category_choices})
         if category_value is None:
-            raise SystemExit(1)
+            logger.info("Cancelled form input. Exiting.")
+            raise SystemExit(0)
         category = Path(category_value["category"])
         category_dir = templates_dir / category
 
@@ -151,7 +153,8 @@ def main(
         )
         template_value = run_form({"template": template_choices})
         if template_value is None:
-            raise SystemExit(1)
+            logger.info("Cancelled form input. Exiting.")
+            raise SystemExit(0)
         template = template_value["template"]
 
     elif "category" not in required_params and "template" in required_params:
@@ -162,16 +165,18 @@ def main(
         form_fields = {"template": template_choices}
         template_value = run_form(form_fields)
         if template_value is None:
-            raise SystemExit(1)
+            logger.info("Cancelled form input. Exiting.")
+            raise SystemExit(0)
         template = Path(template_value["template"])
 
     if not category or not template:
-        raise ValueError(
-            'You must provide both "--category" and  "--template" parameters'
-        )
+        logger.error('You must provide both "--category" and  "--template" parameters')
+        raise SystemExit(1)
 
     directory_template = templates_dir / category / template
-    assert isinstance(directory_template, Path) and directory_template.is_dir()
+    if not isinstance(directory_template, Path) or not directory_template.is_dir():
+        logger.error(f"Invalid template directory {directory_template}")
+        raise SystemExit(1)
 
     data_files = [data_file for data_file in data_dir.iterdir() if data_file.is_file()]
     variables = {"now": datetime.now()}
@@ -182,6 +187,7 @@ def main(
         data = safe_load(yaml_text)
         if isinstance(data, dict):
             variables.update(data)
+    logger.debug(f"Globals: {pformat(variables, indent=2, width=100)}")
 
     default_package_name = target_path.stem
     default_module_name = slugify(default_package_name, separator="_")
@@ -189,6 +195,8 @@ def main(
         "module_name": default_module_name,
         "package_name": default_package_name,
     }
+    logger.debug(f"Defaults: {pformat(defaults, indent=2, width=100)}")
+
     render_template_directory(directory_template, target_path, variables, defaults)
 
 

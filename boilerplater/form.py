@@ -23,14 +23,23 @@ def _is_choice(t: Any) -> bool:
     return isinstance(t, click.Choice)
 
 
-def _coerce(value: Any, t: Any) -> Any:
-    if t is bool or t is bool:
+def _is_valid_float(v: str) -> bool:
+    try:
+        float(v)
+        return True
+    except ValueError:
+        return False
+
+
+def _coerce_to_type(value: Any, _type: Any) -> Any:
+    """Convert a raw widget value to the expected Python type."""
+    if _type is bool or _type is bool:
         return bool(value)
-    if t is int:
+    if _type is int:
         return int(value)
-    if t is float:
+    if _type is float:
         return float(value)
-    if _is_choice(t):
+    if _is_choice(_type):
         return str(value)
     return str(value)
 
@@ -115,14 +124,14 @@ class TemplateFormApp(App[dict[str, Any]]):
         yield Footer()
 
         with ScrollableContainer(id="form-container"):
-            for name, t in self.variables.items():
-                if _is_choice(t):
+            for name, _type in self.variables.items():
+                if _is_choice(_type):
                     type_hint = "choice"
-                elif t is bool:
+                elif _type is bool:
                     type_hint = "bool"
-                elif t is int:
+                elif _type is int:
                     type_hint = "int"
-                elif t is float:
+                elif _type is float:
                     type_hint = "float"
                 else:
                     type_hint = "str"
@@ -133,23 +142,26 @@ class TemplateFormApp(App[dict[str, Any]]):
 
                     default = self.defaults.get(name)
 
-                    if _is_choice(t):
-                        options = [(c, c) for c in t.choices]
-                        yield Select(
-                            options,
-                            id=f"field_{name}",
-                            prompt="Select…",
-                            value=str(default) if default is not None else Select.BLANK,
+                    if _is_choice(_type):
+                        options = [(c, c) for c in _type.choices]
+                        valid_default = (
+                            str(default)
+                            if default is not None and str(default) in _type.choices
+                            else None
                         )
+                        select_kwargs = {"allow_blank": True, "prompt": "Select…"}
+                        if valid_default is not None:
+                            select_kwargs["value"] = valid_default
+                        yield Select(options, id=f"field_{name}", **select_kwargs)
 
-                    elif t is bool:
+                    elif _type is bool:
                         yield Checkbox(
                             "",
                             id=f"field_{name}",
                             value=bool(default) if default is not None else False,
                         )
 
-                    elif t is int:
+                    elif _type is int:
                         yield Input(
                             value=str(default) if default is not None else "",
                             placeholder="integer…",
@@ -162,7 +174,7 @@ class TemplateFormApp(App[dict[str, Any]]):
                             ],
                         )
 
-                    elif t is float:
+                    elif _type is float:
                         yield Input(
                             value=str(default) if default is not None else "",
                             placeholder="number…",
@@ -211,7 +223,7 @@ class TemplateFormApp(App[dict[str, Any]]):
 
             if _is_choice(t):
                 widget: Select = self.query_one(f"#{widget_id}", Select)
-                if widget.value is Select.BLANK:
+                if not isinstance(widget.value, str):
                     errors.append(f"'{name}' requires a selection.")
                     continue
                 results[name] = str(widget.value)
@@ -234,7 +246,7 @@ class TemplateFormApp(App[dict[str, Any]]):
                     continue
 
                 try:
-                    results[name] = _coerce(raw, t)
+                    results[name] = _coerce_to_type(raw, t)
                 except (ValueError, TypeError):
                     errors.append(f"'{name}' could not be converted to {t.__name__}.")
 
@@ -244,14 +256,6 @@ class TemplateFormApp(App[dict[str, Any]]):
         else:
             error_widget.update("")
             self.exit(results)
-
-
-def _is_valid_float(v: str) -> bool:
-    try:
-        float(v)
-        return True
-    except ValueError:
-        return False
 
 
 def run_form(
@@ -271,10 +275,11 @@ def run_form(
         A dict of {variable_name: coerced_value}, or None if the user
         cancelled.
     """
-    seen: dict[str, Any] = {}
-    for name, t in variables.items():
-        if name not in seen:
-            seen[name] = t
 
-    app = TemplateFormApp(seen, defaults=defaults)
+    seen_variables: dict[str, Any] = {}
+    for name, t in variables.items():
+        if name not in seen_variables:
+            seen_variables[name] = t
+
+    app = TemplateFormApp(seen_variables, defaults=defaults)
     return app.run()
