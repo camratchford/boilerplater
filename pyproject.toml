@@ -37,6 +37,7 @@ dependencies = [
 development = [
     "ruff",
     "pytest",
+    "pytest-asyncio",
     "build",
     "twine",
     "isort",
