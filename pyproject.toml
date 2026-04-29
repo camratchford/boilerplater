@@ -1,0 +1,85 @@
+
+[project]
+name = 'boilerplater'
+version = "0.0.1"
+description = 'A project boilerplate generator'
+readme = "README.md"
+
+authors = [
+    {name = 'Cam Ratchford', email = 'camratchford@gmail.com'},
+]
+
+classifiers = [
+    'Development Status :: 3 - Alpha',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3 :: Only',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Information Technology',
+    'Intended Audience :: System Administrators',
+    'Operating System :: POSIX :: Linux',
+    'Environment :: Console',
+    'Environment :: Win32 (MS Windows)',
+    'Environment :: MacOS X',
+    'Topic :: Software Development :: Libraries :: Python Modules',
+]
+
+requires-python = '>=3.11'
+dependencies = [
+    "jinja2",
+    "typer",
+    "byoconfig",
+    "textual",
+    "python-magic",
+    "python-slugify"
+]
+
+[project.optional-dependencies]
+development = [
+    "ruff",
+    "pytest",
+    "build",
+    "twine",
+    "isort",
+]
+
+[project.urls]
+Homepage = 'https://github.com/camratchford/boilerplater'
+Source =  'https://github.com/camratchford/boilerplater'
+
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["boilerplater"]
+
+[tool.setuptools.package-dir]
+"boilerplater" = "boilerplater"
+
+[project.scripts]
+boilerplater = "boilerplater.__main__:cli"
+
+[tool.ruff]
+exclude = [
+    "tests/fixtures/**/*"
+]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+ignore = []
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = false
+docstring-code-line-length = "dynamic"
+
+[tool.pytest.ini_options]
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
