@@ -83,3 +83,8 @@ addopts = "-ra -q"
 testpaths = [
     "tests",
 ]
+
+[tool.isort]
+profile = "black"
+line_length = 119
+skip_gitignore = true
