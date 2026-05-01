@@ -30,7 +30,8 @@ dependencies = [
     "typer",
     "textual",
     "python-magic",
-    "python-slugify"
+    "python-slugify",
+    "pyyaml"
 ]
 
 [project.optional-dependencies]
