@@ -1,23 +1,17 @@
-name: Build and Publish
+name: test.yml
 on:
   pull_request_target:
-    types:
-      - closed
+    types: [assigned, opened, synchronize, reopened]
     branches:
       - main
 permissions:
   contents: read
-  id-token: write
 jobs:
-  publish_linux:
-    if: github.event.pull_request.merged == true
+  test_linux:
     runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
-    environment:
-      name: default
-      url: https://pypi.org/p/boilerplater
     steps:
       - uses: actions/checkout@v6
       - name: Set up Python
@@ -35,7 +29,3 @@ jobs:
           ruff check --exit-non-zero-on-fix .
       - name: Run tests with pytest
         run: pytest .
-      - name: Build the distribution package
-        run: scripts/build.sh
-      - name: pypi-publish
-        uses: pypa/gh-action-pypi-publish@release/v1
