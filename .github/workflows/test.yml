@@ -28,4 +28,4 @@ jobs:
           ruff format --check --exit-non-zero-on-fix .
           ruff check --exit-non-zero-on-fix .
       - name: Run tests with pytest
-        run: pytest .
+        run: pytest --quiet .
