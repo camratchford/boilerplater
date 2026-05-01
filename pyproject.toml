@@ -23,7 +23,7 @@ classifiers = [
     'Topic :: Software Development :: Libraries :: Python Modules',
 ]
 
-requires-python = '>=3.11'
+requires-python = '>=3.10'
 dependencies = [
     "jinja2",
     "typer",
@@ -79,12 +79,12 @@ line-ending = "auto"
 docstring-code-format = false
 docstring-code-line-length = "dynamic"
 
-[tool.pytest.ini_options]
+tool.pytest.ini_options]
+asyncio_mode = "auto"
 addopts = "-ra -q"
 testpaths = [
     "tests",
 ]
-asyncio_mode = "auto"
 
 [tool.isort]
 profile = "black"
