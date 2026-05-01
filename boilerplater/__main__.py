@@ -89,7 +89,7 @@ def main(
     category: Annotated[
         Path,
         Option(
-            "-p",
+            "-c",
             "--category",
             autocompletion=complete_category,
             help="Select which language / framework the templates belong to",

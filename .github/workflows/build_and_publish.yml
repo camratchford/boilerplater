@@ -1,0 +1,41 @@
+name: Build and Publish
+on:
+  pull_request_target:
+    types:
+      - closed
+    branches:
+      - main
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  publish_linux:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    environment:
+      name: default
+      url: https://pypi.org/p/boilerplater
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip setuptools setuptools-scm wheel
+          pip install --upgrade -e .'[development]'
+      - name: Format and lint
+        run: |
+          isort . --check --diff
+          ruff format --check --exit-non-zero-on-fix .
+          ruff check --exit-non-zero-on-fix .
+      - name: Run tests with pytest
+        run: pytest .
+      - name: Build the distribution package
+        run: scripts/build.sh
+      - name: pypi-publish
+        uses: pypa/gh-action-pypi-publish@release/v1
