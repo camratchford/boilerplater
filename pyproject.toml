@@ -1,33 +1,33 @@
 
 [project]
-name = 'boilerplater'
-version = "0.0.1"
-description = 'A project boilerplate generator'
+name = "boilerplater"
+dynamic = ["version"]
+description = "A project boilerplate generator"
 readme = "README.md"
+license = "MIT"
 
 authors = [
-    {name = 'Cam Ratchford', email = 'camratchford@gmail.com'},
+    {name = "Cam Ratchford", email = "camratchford@gmail.com"},
 ]
 
 classifiers = [
-    'Development Status :: 3 - Alpha',
-    'Programming Language :: Python',
-    'Programming Language :: Python :: 3 :: Only',
-    'Intended Audience :: Developers',
-    'Intended Audience :: Information Technology',
-    'Intended Audience :: System Administrators',
-    'Operating System :: POSIX :: Linux',
-    'Environment :: Console',
-    'Environment :: Win32 (MS Windows)',
-    'Environment :: MacOS X',
-    'Topic :: Software Development :: Libraries :: Python Modules',
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "Operating System :: POSIX :: Linux",
+    "Environment :: Console",
+    "Environment :: Win32 (MS Windows)",
+    "Environment :: MacOS X",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
 requires-python = '>=3.10'
 dependencies = [
     "jinja2",
     "typer",
-    "byoconfig",
     "textual",
     "python-magic",
     "python-slugify"
@@ -44,11 +44,11 @@ development = [
 ]
 
 [project.urls]
-Homepage = 'https://github.com/camratchford/boilerplater'
-Source =  'https://github.com/camratchford/boilerplater'
+Homepage = "https://github.com/camratchford/boilerplater"
+Source =  "https://github.com/camratchford/boilerplater"
 
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = ["setuptools>=80", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
@@ -79,7 +79,7 @@ line-ending = "auto"
 docstring-code-format = false
 docstring-code-line-length = "dynamic"
 
-tool.pytest.ini_options]
+[tool.pytest.ini_options]
 asyncio_mode = "auto"
 addopts = "-ra -q"
 testpaths = [
