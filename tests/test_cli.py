@@ -128,7 +128,10 @@ class TestFormCancellation:
         assert result.exit_code == 0
 
     def test_cancel_template_form_exits_0(self, templates_dir, data_dir, target_path):
-        with patch(MOCK_FORM, side_effect=[{"category": "python"}, None]), patch(MOCK_RENDER):
+        with (
+            patch(MOCK_FORM, side_effect=[{"category": "python"}, None]),
+            patch(MOCK_RENDER),
+        ):
             result = invoke(templates_dir, data_dir, target_path)
         assert result.exit_code == 0
 
