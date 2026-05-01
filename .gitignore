@@ -4,12 +4,6 @@
 /build/
 /dist/
 /sdist/
-/extras/docs/site/
-/share/data/
-/share/output/
-/share/job_ads/
-/share/wizard-data/
-/tests/fixtures/output/
 /docs/
 
 # Byte-compiled / optimized / DLL files
