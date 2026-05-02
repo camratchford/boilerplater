@@ -29,6 +29,8 @@ jobs:
           pip install --upgrade pip setuptools setuptools-scm wheel
           pip install --upgrade -e .'[development]'
       - name: Build the distribution package
-        run: scripts/build.sh
+        run: |
+          python -m build --wheel --outdir ./dist
+          python -m build --sdist --outdir ./dist
       - name: pypi-publish
         uses: pypa/gh-action-pypi-publish@release/v1
