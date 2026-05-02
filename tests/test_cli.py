@@ -107,13 +107,6 @@ class TestArgumentValidation:
                 target_path,
                 extra_args=["--category", "python"],
             )
-        print(result.output)
-        if result.exception:
-            import traceback
-
-            traceback.print_exception(
-                type(result.exception), result.exception, result.exception.__traceback__
-            )
         assert result.exit_code == 0
 
     def test_both_provided_skips_form(self, templates_dir, data_dir, target_path):
