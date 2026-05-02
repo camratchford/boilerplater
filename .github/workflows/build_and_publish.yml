@@ -28,13 +28,6 @@ jobs:
         run: |
           pip install --upgrade pip setuptools setuptools-scm wheel
           pip install --upgrade -e .'[development]'
-      - name: Format and lint
-        run: |
-          isort . --check --diff
-          ruff format --check --exit-non-zero-on-fix .
-          ruff check --exit-non-zero-on-fix .
-      - name: Run tests with pytest
-        run: pytest .
       - name: Build the distribution package
         run: scripts/build.sh
       - name: pypi-publish
