@@ -100,7 +100,7 @@ class TestArgumentValidation:
     def test_category_provided_template_missing_prompts_form(
         self, templates_dir, data_dir, target_path
     ):
-        with patch(MOCK_FORM, return_value={"template": "cli"}), patch(MOCK_RENDER):
+        with patch(MOCK_FORM, return_value={"template": "cli"}):
             result = invoke(
                 templates_dir,
                 data_dir,
