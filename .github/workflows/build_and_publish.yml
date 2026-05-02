@@ -16,7 +16,7 @@ jobs:
       run:
         shell: bash
     environment:
-      name: default
+      name: pypi
       url: https://pypi.org/p/boilerplater
     steps:
       - uses: actions/checkout@v6
