@@ -113,7 +113,6 @@ def main(
         ),
     ] = LogLevel.warning,
 ):
-
     logger.setLevel(log_level.value)
 
     if not templates_dir.is_dir():
@@ -134,10 +133,9 @@ def main(
         )
         data_dir.mkdir(parents=True, mode=0o644)
 
-    required_params = {
-        param for param in ("category", "template") if locals().get(param) is None
-    }
-    if "category" in required_params and "template" in required_params:
+    category_is_set = category is not None
+    template_is_set = template is not None
+    if not category_is_set and not template_is_set:
         category_choices = Choice(
             [subdir.name for subdir in templates_dir.iterdir() if subdir.is_dir()]
         )
@@ -157,7 +155,7 @@ def main(
             raise SystemExit(0)
         template = template_value["template"]
 
-    elif "category" not in required_params and "template" in required_params:
+    elif category_is_set and not template_is_set:
         category_dir = templates_dir / category
         template_choices = Choice(
             [subdir.name for subdir in category_dir.iterdir() if subdir.is_dir()]

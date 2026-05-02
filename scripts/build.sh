@@ -13,3 +13,4 @@ PROJECT_ROOT="$THIS_DIR"/..
   --outdir "$PROJECT_ROOT"/dist \
   --sdist \
   "$PROJECT_ROOT"
+

@@ -50,32 +50,34 @@ def invoke(templates_dir, data_dir, target_path, extra_args=(), **kwargs):
 
 class TestArgumentValidation:
     def test_missing_target_path_exits_nonzero(self, templates_dir, data_dir):
-        result = runner.invoke(
-            cli,
-            [
-                "--templates-dir",
-                str(templates_dir),
-                "--data-dir",
-                str(data_dir),
-            ],
-        )
-        assert result.exit_code != 0
+        with patch(MOCK_RENDER), patch(MOCK_FORM, return_value=None):
+            result = runner.invoke(
+                cli,
+                [
+                    "--templates-dir",
+                    str(templates_dir),
+                    "--data-dir",
+                    str(data_dir),
+                ],
+            )
+            assert result.exit_code != 0
 
     def test_empty_templates_dir_exits_1(self, tmp_path, data_dir, target_path):
-        empty = tmp_path / "empty_templates"
-        empty.mkdir()
-        result = invoke(empty, data_dir, target_path)
-        assert result.exit_code == 1
+        with patch(MOCK_RENDER), patch(MOCK_FORM, return_value=None):
+            empty = tmp_path / "empty_templates"
+            empty.mkdir()
+            result = invoke(empty, data_dir, target_path)
+            assert result.exit_code == 1
 
     def test_invalid_template_directory_exits_1(
         self, templates_dir, data_dir, target_path
     ):
-        with patch(MOCK_RENDER):
+        with patch(MOCK_RENDER), patch(MOCK_FORM):
             result = invoke(
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "nonexistent"],
+                extra_args=["--category", "python", "--template", "nonexistent"],
             )
         assert result.exit_code == 1
 
@@ -98,12 +100,12 @@ class TestArgumentValidation:
     def test_category_provided_template_missing_prompts_form(
         self, templates_dir, data_dir, target_path
     ):
-        with patch(MOCK_FORM, return_value={"template": "cli"}), patch(MOCK_RENDER):
+        with patch(MOCK_FORM, return_value={"template": "cli"}):
             result = invoke(
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python"],
+                extra_args=["--category", "python"],
             )
         assert result.exit_code == 0
 
@@ -113,7 +115,7 @@ class TestArgumentValidation:
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
         mock_form.assert_not_called()
         assert result.exit_code == 0
@@ -121,24 +123,27 @@ class TestArgumentValidation:
 
 class TestFormCancellation:
     def test_cancel_category_form_exits_0(self, templates_dir, data_dir, target_path):
-        with patch(MOCK_FORM, return_value=None):
+        with patch(MOCK_FORM, return_value=None), patch(MOCK_RENDER):
             result = invoke(templates_dir, data_dir, target_path)
         assert result.exit_code == 0
 
     def test_cancel_template_form_exits_0(self, templates_dir, data_dir, target_path):
-        with patch(MOCK_FORM, side_effect=[{"category": "python"}, None]):
+        with (
+            patch(MOCK_FORM, side_effect=[{"category": "python"}, None]),
+            patch(MOCK_RENDER),
+        ):
             result = invoke(templates_dir, data_dir, target_path)
         assert result.exit_code == 0
 
     def test_cancel_template_form_with_category_provided_exits_0(
         self, templates_dir, data_dir, target_path
     ):
-        with patch(MOCK_FORM, return_value=None):
+        with patch(MOCK_FORM, return_value=None), patch(MOCK_RENDER):
             result = invoke(
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python"],
+                extra_args=["--category", "python"],
             )
         assert result.exit_code == 0
 
@@ -147,12 +152,12 @@ class TestTemplateResolution:
     def test_correct_template_dir_passed_to_render(
         self, templates_dir, data_dir, target_path
     ):
-        with patch(MOCK_RENDER) as mock_render:
+        with patch(MOCK_RENDER) as mock_render, patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
         called_template_dir = mock_render.call_args[0][0]
         assert called_template_dir == templates_dir / "python" / "cli"
@@ -160,12 +165,12 @@ class TestTemplateResolution:
     def test_correct_target_path_passed_to_render(
         self, templates_dir, data_dir, target_path
     ):
-        with patch(MOCK_RENDER) as mock_render:
+        with patch(MOCK_RENDER) as mock_render, patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
         called_target = mock_render.call_args[0][1]
         assert called_target == target_path
@@ -193,12 +198,12 @@ class TestDataFileLoading:
     def test_yaml_data_passed_as_variables(self, templates_dir, data_dir, target_path):
         (data_dir / "user.yaml").write_text("author: Alice\nemail: alice@example.com\n")
 
-        with patch(MOCK_RENDER) as mock_render:
+        with patch(MOCK_RENDER) as mock_render, patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
 
         variables = mock_render.call_args[0][2]
@@ -209,12 +214,12 @@ class TestDataFileLoading:
         (data_dir / "a.yaml").write_text("x: 1\n")
         (data_dir / "b.yaml").write_text("y: 2\n")
 
-        with patch(MOCK_RENDER) as mock_render:
+        with patch(MOCK_RENDER) as mock_render, patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
 
         variables = mock_render.call_args[0][2]
@@ -224,12 +229,12 @@ class TestDataFileLoading:
     def test_empty_yaml_file_ignored(self, templates_dir, data_dir, target_path):
         (data_dir / "empty.yaml").write_text("")
 
-        with patch(MOCK_RENDER):
+        with patch(MOCK_RENDER), patch(MOCK_FORM, return_value=None):
             result = invoke(
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
 
         assert result.exit_code == 0
@@ -237,12 +242,12 @@ class TestDataFileLoading:
     def test_non_dict_yaml_ignored(self, templates_dir, data_dir, target_path):
         (data_dir / "list.yaml").write_text("- item1\n- item2\n")
 
-        with patch(MOCK_RENDER) as mock_render:
+        with patch(MOCK_RENDER) as mock_render, patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
 
         variables = mock_render.call_args[0][2]
@@ -251,12 +256,12 @@ class TestDataFileLoading:
     def test_now_variable_always_present(self, templates_dir, data_dir, target_path):
         from datetime import datetime
 
-        with patch(MOCK_RENDER) as mock_render:
+        with patch(MOCK_RENDER) as mock_render, patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
 
         variables = mock_render.call_args[0][2]
@@ -267,12 +272,12 @@ class TestDataFileLoading:
         nonexistent_data = tmp_path / "new_data_dir"
         assert not nonexistent_data.exists()
 
-        with patch(MOCK_RENDER):
+        with patch(MOCK_RENDER), patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 nonexistent_data,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
 
         assert nonexistent_data.is_dir()
@@ -284,12 +289,12 @@ class TestDefaults:
     ):
         target = tmp_path / "my-cool-project"
 
-        with patch(MOCK_RENDER) as mock_render:
+        with patch(MOCK_RENDER) as mock_render, patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 data_dir,
                 target,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
 
         defaults = mock_render.call_args[0][3]
@@ -300,12 +305,12 @@ class TestDefaults:
     ):
         target = tmp_path / "my-cool-project"
 
-        with patch(MOCK_RENDER) as mock_render:
+        with patch(MOCK_RENDER) as mock_render, patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 data_dir,
                 target,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
 
         defaults = mock_render.call_args[0][3]
