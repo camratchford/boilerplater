@@ -72,7 +72,7 @@ class TestArgumentValidation:
     def test_invalid_template_directory_exits_1(
         self, templates_dir, data_dir, target_path
     ):
-        with patch(MOCK_RENDER), patch(MOCK_FORM, return_value=None):
+        with patch(MOCK_RENDER), patch(MOCK_FORM):
             result = invoke(
                 templates_dir,
                 data_dir,
