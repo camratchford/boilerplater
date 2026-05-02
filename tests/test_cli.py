@@ -77,7 +77,7 @@ class TestArgumentValidation:
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "nonexistent"],
+                extra_args=["--category", "python", "--template", "nonexistent"],
             )
         assert result.exit_code == 1
 
@@ -105,7 +105,7 @@ class TestArgumentValidation:
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python"],
+                extra_args=["--category", "python"],
             )
         assert result.exit_code == 0
 
@@ -115,7 +115,7 @@ class TestArgumentValidation:
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
         mock_form.assert_not_called()
         assert result.exit_code == 0
@@ -143,7 +143,7 @@ class TestFormCancellation:
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python"],
+                extra_args=["--category", "python"],
             )
         assert result.exit_code == 0
 
@@ -157,7 +157,7 @@ class TestTemplateResolution:
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
         called_template_dir = mock_render.call_args[0][0]
         assert called_template_dir == templates_dir / "python" / "cli"
@@ -170,7 +170,7 @@ class TestTemplateResolution:
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
         called_target = mock_render.call_args[0][1]
         assert called_target == target_path
@@ -203,7 +203,7 @@ class TestDataFileLoading:
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
 
         variables = mock_render.call_args[0][2]
@@ -219,7 +219,7 @@ class TestDataFileLoading:
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
 
         variables = mock_render.call_args[0][2]
@@ -234,7 +234,7 @@ class TestDataFileLoading:
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
 
         assert result.exit_code == 0
@@ -247,7 +247,7 @@ class TestDataFileLoading:
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
 
         variables = mock_render.call_args[0][2]
@@ -261,7 +261,7 @@ class TestDataFileLoading:
                 templates_dir,
                 data_dir,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
 
         variables = mock_render.call_args[0][2]
@@ -277,7 +277,7 @@ class TestDataFileLoading:
                 templates_dir,
                 nonexistent_data,
                 target_path,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
 
         assert nonexistent_data.is_dir()
@@ -294,7 +294,7 @@ class TestDefaults:
                 templates_dir,
                 data_dir,
                 target,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
 
         defaults = mock_render.call_args[0][3]
@@ -310,7 +310,7 @@ class TestDefaults:
                 templates_dir,
                 data_dir,
                 target,
-                extra_args=["-c", "python", "-t", "cli"],
+                extra_args=["--category", "python", "--template", "cli"],
             )
 
         defaults = mock_render.call_args[0][3]
