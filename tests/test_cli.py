@@ -98,7 +98,7 @@ class TestArgumentValidation:
         assert result.exit_code == 0
 
     def test_category_provided_template_missing_prompts_form(
-            self, templates_dir, data_dir, target_path
+        self, templates_dir, data_dir, target_path
     ):
         with patch(MOCK_FORM, return_value={"template": "cli"}):
             result = invoke(
@@ -110,7 +110,10 @@ class TestArgumentValidation:
         print(result.output)
         if result.exception:
             import traceback
-            traceback.print_exception(type(result.exception), result.exception, result.exception.__traceback__)
+
+            traceback.print_exception(
+                type(result.exception), result.exception, result.exception.__traceback__
+            )
         assert result.exit_code == 0
 
     def test_both_provided_skips_form(self, templates_dir, data_dir, target_path):
