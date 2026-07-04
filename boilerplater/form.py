@@ -107,7 +107,7 @@ class TemplateFormApp(App[dict[str, Any]]):
     """
 
     BINDINGS = [
-        ("ctrl+s", "submit", "Submit"),
+        ("enter", "submit", "Submit"),
         ("escape", "quit_app", "Quit"),
     ]
 
