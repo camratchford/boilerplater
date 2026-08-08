@@ -46,13 +46,14 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
     jinja2_block_start_string: str = "{%"
     jinja2_block_end_string: str = "%}"
     jinja2_variable_start_string: str = "{{"  #  {&  &} seem to work for Helm
-    jinja2_variable_end_string: str = "}}"    #
+    jinja2_variable_end_string: str = "}}"  #
     jinja2_comment_start_string: str = "{#"
     jinja2_comment_end_string: str = "#}"
 
     module_configs: dict[str, ModuleTemplateConfig] | None = {}
     project_template_config: ProjectTemplateConfig | None = None
     variables: dict[str, Any] = {"now": datetime.now()}
+    run_on_complete_scripts: list[Path] = []
 
     requirements: list[ModuleTemplateConfig] | None = []
     available_modules: list[ModuleTemplateConfig] | None = None
@@ -97,14 +98,12 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
             if module in self.project_template_config.add_ons
         }
 
-        selected_addons = run_form(variables=available_add_ons, title="Select Add-ons", defaults={})
+        selected_addons = run_form(
+            variables=available_add_ons, title="Select Add-ons", defaults={}
+        )
         if not selected_addons:
             return []
-        add_ons = [
-            add_on
-            for add_on, enabled in selected_addons.items()
-            if enabled
-        ]
+        add_ons = [add_on for add_on, enabled in selected_addons.items() if enabled]
         return add_ons
 
     def load_modules(self):
@@ -167,6 +166,9 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
         )
         self.project_template_config.requirements.extend(self.load_add_ons())
         self.requirements.extend(self.get_requirements(self.project_template_config))
+        self.run_on_complete_scripts.extend(
+            self.project_template_config.run_on_complete_scripts
+        )
 
     def get_requirements(
         self,
@@ -195,6 +197,7 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
                 )
 
             requirements.append(module_config)
+            self.run_on_complete_scripts.extend(module_config.run_on_complete_scripts)
 
         return requirements
 

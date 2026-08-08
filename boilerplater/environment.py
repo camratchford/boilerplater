@@ -35,10 +35,14 @@ class VariablePromptingEnvironment(Environment):
           to the parent class jinja2.environment.Environment's 'preprocess' method.
         """
 
-        type_pattern = r"\{\{\s*(\w+)\s*:\s*(\w+)\s*\}\}"
+        # In case it's not '{{' and '}}', we need to escape them because they probably still contain braces
+        start_string = "".join(["\\" + char for char in self.variable_start_string])
+        end_string = "".join(["\\" + char for char in self.variable_end_string])
+        type_pattern = start_string + r"s*(\w+)\s*:\s*(\w+)\s*" + end_string
         """
         Matches '{{ $var_name : $type_name }}' where:
-          - $var_name, $type_name are any word 
+          - '{{' and '}}' are self.variable_start_string and self.variable_end_string respectively
+          - '$var_name', '$type_name' are any word 
           - whitespace is optional
         """
 
@@ -52,7 +56,11 @@ class VariablePromptingEnvironment(Environment):
             )
             self.type_registry[var_name] = var_type
 
-        clean_source = re.sub(type_pattern, r"{{ \1 }}", source)
+        clean_source = re.sub(
+            type_pattern,
+            rf"{self.variable_start_string} \1 {self.variable_start_string}",
+            source,
+        )
         return super().preprocess(clean_source, name, filename)
 
     def update_undeclared_variables(self, source: str):

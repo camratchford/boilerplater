@@ -83,7 +83,9 @@ def prompt_for_missing_cli_params(category: str, template: str):
         if template_value is None:
             logger.info("Cancelled form input. Exiting.")
             raise SystemExit(0)
-        boilerplater_config.project_template = boilerplater_config.category / template_value["template"]
+        boilerplater_config.project_template = (
+            boilerplater_config.category / template_value["template"]
+        )
 
     elif category_is_set and not template_is_set:
         boilerplater_config.category = boilerplater_config.templates_dir / category
@@ -97,13 +99,17 @@ def prompt_for_missing_cli_params(category: str, template: str):
         if template_value is None:
             logger.info("Cancelled form input. Exiting.")
             raise SystemExit(0)
-        boilerplater_config.project_template = boilerplater_config.category / template_value["template"]
+        boilerplater_config.project_template = (
+            boilerplater_config.category / template_value["template"]
+        )
 
     if template_is_set:
         boilerplater_config.category = boilerplater_config.templates_dir / category
         boilerplater_config.project_template = boilerplater_config.category / template
         if not boilerplater_config.project_template.exists():
-            logger.error(f"Template '{boilerplater_config.project_template}' does not exist")
+            logger.error(
+                f"Template '{boilerplater_config.project_template}' does not exist"
+            )
             raise SystemExit(1)
 
     if not boilerplater_config.category or not boilerplater_config.project_template:

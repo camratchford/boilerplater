@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class SentinelNone:
     """Sentinel Type because the annotated type could be 'None'"""
+
     ...
 
 
@@ -21,6 +22,9 @@ class BaseTemplateConfig(BaseModel):
     ]
     force_copy_patterns: list[str] = ["*.j2"]
     cleanup_patterns: list[str] | None = [".placeholder", ".gitkeep"]
+
+    # Assume that these are idempotent ane sequence-agnostic in respect to other scripts
+    run_on_complete_scripts: list[Path] = []
 
     def __hash__(self):
         return hash(self.name)

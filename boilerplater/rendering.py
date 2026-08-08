@@ -1,5 +1,5 @@
 import logging
-from dataclasses import 
+from dataclasses import dataclass
 from pathlib import Path
 from shutil import copy2
 
@@ -16,8 +16,8 @@ boilerplater_config = BoilerplaterConfig()
 logger = logging.getLogger(__name__)
 
 
-
-class OutputData(dataclass):
+@dataclass()
+class OutputData:
     output_path_template: Template
     subtemplate_path: Path
     subtemplate: Template = None
@@ -79,7 +79,9 @@ def render_template_data(
 
     template_loader = FileSystemLoader(template_config.path)
     jinaj2_settings = boilerplater_config.get_by_prefix("jinja2")
-    template_env = VariablePromptingEnvironment(loader=template_loader, **jinaj2_settings)
+    template_env = VariablePromptingEnvironment(
+        loader=template_loader, **jinaj2_settings
+    )
     template_env.globals.update(**boilerplater_config.variables)
     defaults = {
         **boilerplater_config.variable_default_values,
@@ -121,7 +123,9 @@ def render_template_data(
 
 def render_project_template():
     template_list = [
-        boilerplater_config.project_template_config if boilerplater_config.project_template_config else ...,
+        boilerplater_config.project_template_config
+        if boilerplater_config.project_template_config
+        else ...,
         *boilerplater_config.requirements,
     ]
     payload_data = [

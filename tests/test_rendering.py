@@ -159,7 +159,6 @@ class TestRenderTemplateDirectory:
         boilerplater_config.project_template = src
         render_project_template()
 
-
         assert (out / "image.png").read_bytes() == PNG_MAGIC
 
     def test_preserves_file_permissions_on_render(self, tmp_path):
@@ -219,7 +218,6 @@ class TestRenderTemplateDirectory:
 
         assert (out / "a.txt").read_text() == "hello"
         assert (out / "b.txt").read_text() == "world"
-
 
     def test_typed_variable_in_template(self, tmp_path):
         src = tmp_path / "src"
