@@ -4,6 +4,7 @@ from typing import Any
 
 import click
 from textual import on
+from textual.binding import Binding
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, ScrollableContainer
 from textual.validation import Function
@@ -86,6 +87,7 @@ class TemplateFormApp(App[dict[str, Any]]):
 
     .field-block Checkbox {
         width: auto;
+        color: white;
     }
 
     #button-bar {
@@ -104,23 +106,38 @@ class TemplateFormApp(App[dict[str, Any]]):
         height: auto;
         padding: 0 0 1 0;
     }
+    
+    ToggleButton {
+        & > .toggle--button {
+            color: #bfbfbf;
+            background: transparent;
+            text-style: dim;
+        }
+        &.-on > .toggle--button {
+            text-style: bold not dim;
+        }
+    }
     """
 
     BINDINGS = [
-        ("ctrl+s", "submit", "Submit"),
-        ("escape", "quit_app", "Quit"),
+        Binding("enter", "submit", "Submit", priority=True),
+        Binding("escape", "quit_app", "Quit"),
     ]
 
     def __init__(
-        self, variables: dict[str, Any], defaults: dict[str, Any] | None = None
+        self,
+        variables: dict[str, Any],
+        defaults: dict[str, Any] | None = None,
+        title: str = "",
     ):
         super().__init__()
         self.variables = variables
         self.defaults = defaults or {}
+        self.title = title
         self._error_label: Static | None = None
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=False)
+        yield Header(name=self.title, show_clock=False)
         yield Footer()
 
         with ScrollableContainer(id="form-container"):
@@ -137,7 +154,7 @@ class TemplateFormApp(App[dict[str, Any]]):
                     type_hint = "str"
 
                 with Horizontal(classes="field-block"):
-                    yield Label(name.replace("_", " ").title(), classes="field-label")
+                    yield Label(name, classes="field-label")
                     yield Label(type_hint, classes="type-hint")
 
                     default = self.defaults.get(name)
@@ -152,6 +169,7 @@ class TemplateFormApp(App[dict[str, Any]]):
                         select_kwargs = {"allow_blank": True, "prompt": "Select…"}
                         if valid_default is not None:
                             select_kwargs["value"] = valid_default
+
                         yield Select(options, id=f"field_{name}", **select_kwargs)
 
                     elif _type is bool:
@@ -259,7 +277,7 @@ class TemplateFormApp(App[dict[str, Any]]):
 
 
 def run_form(
-    variables: dict[str, Any], defaults: dict[str, Any] | None = None
+    variables: dict[str, Any], defaults: dict[str, Any] | None = None, title: str = ""
 ) -> dict[str, Any] | None:
     """
     Launch the Textual form and return the filled values dict.
@@ -281,5 +299,5 @@ def run_form(
         if name not in seen_variables:
             seen_variables[name] = t
 
-    app = TemplateFormApp(seen_variables, defaults=defaults)
+    app = TemplateFormApp(seen_variables, defaults=defaults, title=title)
     return app.run()

@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import 
 from pathlib import Path
 from shutil import copy2
 
@@ -16,8 +16,8 @@ boilerplater_config = BoilerplaterConfig()
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class OutputData:
+
+class OutputData(dataclass):
     output_path_template: Template
     subtemplate_path: Path
     subtemplate: Template = None

@@ -1,8 +1,7 @@
-
 [project]
 name = "boilerplater"
-dynamic = ["version"]
-description = "A project boilerplate generator"
+version = "0.0.1"
+description = "An interactive project boilerplate generator"
 readme = "README.md"
 license = "MIT"
 
@@ -31,18 +30,16 @@ dependencies = [
     "textual",
     "python-magic",
     "python-slugify",
-    "pyyaml"
+    "pyyaml",
+    "pydantic"
 ]
 
 [project.optional-dependencies]
 development = [
-    "ruff",
     "pytest",
     "pytest-asyncio",
     "pytest-timeout",
-    "build",
-    "twine",
-    "isort",
+    "package-scripts"
 ]
 
 [project.urls]
