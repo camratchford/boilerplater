@@ -26,12 +26,13 @@ class OutputData(dataclass):
 
 def should_copy(path: Path) -> bool:
     mimetype = from_file(str(path), mime=True)
-
-    force_copy_paths = [
-        file
-        for pattern in boilerplater_config.project_template_config.force_copy_patterns
-        for file in path.parent.glob(pattern)
-    ]
+    force_copy_paths = []
+    if boilerplater_config.project_template_config:
+        force_copy_paths = [
+            file
+            for pattern in boilerplater_config.project_template_config.force_copy_patterns
+            for file in path.parent.glob(pattern)
+        ]
 
     return (
         path in force_copy_paths
@@ -52,11 +53,13 @@ def should_copy(path: Path) -> bool:
 
 
 def should_skip(path: Path):
-    return path in [
-        file
-        for pattern in boilerplater_config.project_template_config.exclude_patterns
-        for file in path.parent.glob(pattern)
-    ]
+    if boilerplater_config.project_template_config:
+        return path in [
+            file
+            for pattern in boilerplater_config.project_template_config.exclude_patterns
+            for file in path.parent.glob(pattern)
+        ]
+    return []
 
 
 def render_output_path(
@@ -118,7 +121,7 @@ def render_template_data(
 
 def render_project_template():
     template_list = [
-        boilerplater_config.project_template_config,
+        boilerplater_config.project_template_config if boilerplater_config.project_template_config else ...,
         *boilerplater_config.requirements,
     ]
     payload_data = [

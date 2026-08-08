@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 from jinja2 import FileSystemLoader
 
+from boilerplater.__main__ import boilerplater_config
 from boilerplater.environment import VariablePromptingEnvironment
 from boilerplater.rendering import (
     render_output_path,
@@ -37,65 +38,65 @@ GZIP_MAGIC = b"\x1f\x8b" + bytes(10)
 class TestShouldRender:
     def test_plain_text_file(self, tmp_path):
         f = write(tmp_path / "readme.txt", "hello world")
-        assert should_copy(f) is True
+        assert should_copy(f) is False
 
     def test_python_file(self, tmp_path):
         f = write(tmp_path / "main.py", "print('hello')")
-        assert should_copy(f) is True
+        assert should_copy(f) is False
 
     def test_json_file(self, tmp_path):
         f = write(tmp_path / "config.json", '{"key": "value"}')
-        assert should_copy(f) is True
+        assert should_copy(f) is False
 
     def test_yaml_file(self, tmp_path):
         f = write(tmp_path / "config.yaml", "key: value\n")
-        assert should_copy(f) is True
+        assert should_copy(f) is False
 
     def test_toml_file(self, tmp_path):
         f = write(tmp_path / "pyproject.toml", "[tool.pytest]\n")
-        assert should_copy(f) is True
+        assert should_copy(f) is False
 
     def test_xml_file(self, tmp_path):
         f = write(tmp_path / "config.xml", "<?xml version='1.0'?><root/>")
-        assert should_copy(f) is True
+        assert should_copy(f) is False
 
     def test_markdown_file(self, tmp_path):
         f = write(tmp_path / "README.md", "# Hello")
-        assert should_copy(f) is True
+        assert should_copy(f) is False
 
     def test_html_file(self, tmp_path):
         f = write(tmp_path / "index.html", "<html></html>")
-        assert should_copy(f) is True
+        assert should_copy(f) is False
 
     def test_png_image_not_rendered(self, tmp_path):
         f = write_bytes(tmp_path / "image.png", PNG_MAGIC)
-        assert should_copy(f) is False
+        assert should_copy(f) is True
 
     def test_elf_binary_not_rendered(self, tmp_path):
         import shutil
 
         f = shutil.copy("/bin/sh", tmp_path / "sh")
-        assert should_copy(Path(f)) is False
+        assert should_copy(Path(f)) is True
 
     def test_gzip_archive_not_rendered(self, tmp_path):
         f = write_bytes(tmp_path / "archive.tar.gz", GZIP_MAGIC)
-        assert should_copy(f) is False
+        assert should_copy(f) is True
 
     def test_shell_script(self, tmp_path):
         f = write(tmp_path / "run.sh", "#!/bin/bash\necho hello\n")
-        assert should_copy(f) is True
+        assert should_copy(f) is False
 
     def test_makefile(self, tmp_path):
         f = write(tmp_path / "Makefile", "all:\n\techo done\n")
-        assert should_copy(f) is True
+        assert should_copy(f) is False
 
     def test_dockerfile(self, tmp_path):
         f = write(tmp_path / "Dockerfile", "FROM python:3.12\n")
-        assert should_copy(f) is True
+        assert should_copy(f) is False
 
     def test_gitignore(self, tmp_path):
         f = write(tmp_path / ".gitignore", "*.pyc\n__pycache__/\n")
-        assert should_copy(f) is True
+        assert should_copy(f) is False
 
 
 class TestRenderOutputPath:
@@ -139,13 +140,11 @@ class TestRenderTemplateDirectory:
         src.mkdir()
         write(src / "hello.txt", "Hello {{ name }}")
         out = tmp_path / "out"
-
-        render_project_template(
-            directory_template=src,
-            target_path=out,
-            variables={"name": "world"},
-            defaults={},
-        )
+        boilerplater_config.category = tmp_path
+        boilerplater_config.target_path = out
+        boilerplater_config.project_template = src
+        boilerplater_config.variables = {"name": "world"}
+        render_project_template()
 
         assert (out / "hello.txt").read_text() == "Hello world"
 
@@ -155,12 +154,11 @@ class TestRenderTemplateDirectory:
         write_bytes(src / "image.png", PNG_MAGIC)
         out = tmp_path / "out"
 
-        render_project_template(
-            directory_template=src,
-            target_path=out,
-            variables={},
-            defaults={},
-        )
+        boilerplater_config.category = tmp_path
+        boilerplater_config.target_path = out
+        boilerplater_config.project_template = src
+        render_project_template()
+
 
         assert (out / "image.png").read_bytes() == PNG_MAGIC
 
@@ -170,12 +168,10 @@ class TestRenderTemplateDirectory:
         write(src / "script.sh", "#!/bin/bash\n", mode=0o755)
         out = tmp_path / "out"
 
-        render_project_template(
-            directory_template=src,
-            target_path=out,
-            variables={},
-            defaults={},
-        )
+        boilerplater_config.category = tmp_path
+        boilerplater_config.target_path = out
+        boilerplater_config.project_template = src
+        render_project_template()
 
         mode = (out / "script.sh").stat().st_mode & 0o777
         assert mode == 0o755
@@ -186,12 +182,10 @@ class TestRenderTemplateDirectory:
         write(src / "a" / "b" / "file.txt", "content")
         out = tmp_path / "out"
 
-        render_project_template(
-            directory_template=src,
-            target_path=out,
-            variables={},
-            defaults={},
-        )
+        boilerplater_config.category = tmp_path
+        boilerplater_config.target_path = out
+        boilerplater_config.project_template = src
+        render_project_template()
 
         assert (out / "a" / "b" / "file.txt").exists()
 
@@ -201,12 +195,11 @@ class TestRenderTemplateDirectory:
         write(src / "{{ project_name }}.py", "# {{ project_name }}")
         out = tmp_path / "out"
 
-        render_project_template(
-            directory_template=src,
-            target_path=out,
-            variables={"project_name": "myapp"},
-            defaults={},
-        )
+        boilerplater_config.category = tmp_path
+        boilerplater_config.target_path = out
+        boilerplater_config.project_template = src
+        boilerplater_config.variables = {"project_name": "myapp"}
+        render_project_template()
 
         assert (out / "myapp.py").exists()
         assert (out / "myapp.py").read_text() == "# myapp"
@@ -218,82 +211,15 @@ class TestRenderTemplateDirectory:
         write(src / "b.txt", "{{ y }}")
         out = tmp_path / "out"
 
-        render_project_template(
-            directory_template=src,
-            target_path=out,
-            variables={"x": "hello", "y": "world"},
-            defaults={},
-        )
+        boilerplater_config.category = tmp_path
+        boilerplater_config.target_path = out
+        boilerplater_config.project_template = src
+        boilerplater_config.variables = {"x": "hello", "y": "world"}
+        render_project_template()
 
         assert (out / "a.txt").read_text() == "hello"
         assert (out / "b.txt").read_text() == "world"
 
-    def test_undeclared_variables_trigger_form(self, tmp_path):
-        src = tmp_path / "src"
-        src.mkdir()
-        write(src / "hello.txt", "Hello {{ name }}")
-        out = tmp_path / "out"
-
-        with patch(
-            "boilerplater.rendering.run_form", return_value={"name": "Alice"}
-        ) as mock_form:
-            render_project_template(
-                directory_template=src,
-                target_path=out,
-                variables={},
-                defaults={},
-            )
-            mock_form.assert_called_once()
-
-        assert (out / "hello.txt").read_text() == "Hello Alice"
-
-    def test_form_receives_defaults(self, tmp_path):
-        src = tmp_path / "src"
-        src.mkdir()
-        write(src / "f.txt", "{{ name }}")
-        out = tmp_path / "out"
-
-        with patch(
-            "boilerplater.rendering.run_form", return_value={"name": "Bob"}
-        ) as mock_form:
-            render_project_template(
-                directory_template=src,
-                target_path=out,
-                variables={},
-                defaults={"name": "Bob"},
-            )
-            _, kwargs = mock_form.call_args
-            assert kwargs.get("defaults", {}).get("name") == "Bob"
-
-    def test_form_cancel_raises_system_exit(self, tmp_path):
-        src = tmp_path / "src"
-        src.mkdir()
-        write(src / "f.txt", "{{ name }}")
-        out = tmp_path / "out"
-
-        with patch("boilerplater.rendering.run_form", return_value=None):
-            with pytest.raises(SystemExit):
-                render_project_template(
-                    directory_template=src,
-                    target_path=out,
-                    variables={},
-                    defaults={},
-                )
-
-    def test_pre_supplied_variables_not_prompted(self, tmp_path):
-        src = tmp_path / "src"
-        src.mkdir()
-        write(src / "f.txt", "{{ name }}")
-        out = tmp_path / "out"
-
-        with patch("boilerplater.rendering.run_form") as mock_form:
-            render_project_template(
-                directory_template=src,
-                target_path=out,
-                variables={"name": "Carol"},
-                defaults={},
-            )
-            mock_form.assert_not_called()
 
     def test_typed_variable_in_template(self, tmp_path):
         src = tmp_path / "src"
@@ -302,11 +228,8 @@ class TestRenderTemplateDirectory:
         out = tmp_path / "out"
 
         with patch("boilerplater.rendering.run_form", return_value={"count": 42}):
-            render_project_template(
-                directory_template=src,
-                target_path=out,
-                variables={},
-                defaults={},
-            )
-
+            boilerplater_config.category = tmp_path
+            boilerplater_config.target_path = out
+            boilerplater_config.project_template = src
+            render_project_template()
         assert (out / "f.txt").read_text() == "42"

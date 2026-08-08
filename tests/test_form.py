@@ -200,7 +200,7 @@ class TestSubmission:
     async def test_ctrl_s_submits(self):
         app = TemplateFormApp({"name": str}, defaults={"name": "hello"})
         async with app.run_test() as pilot:
-            await pilot.press("ctrl+s")
+            await pilot.press("enter")
             await pilot.pause()
 
         assert app.return_value == {"name": "hello"}

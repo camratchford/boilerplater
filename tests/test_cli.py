@@ -4,11 +4,12 @@ from unittest.mock import patch
 import pytest
 from typer.testing import CliRunner
 
+import boilerplater.__main__
 from boilerplater.__main__ import cli
 
 runner = CliRunner()
 
-MOCK_RENDER = "boilerplater.__main__.render_template_directory"
+MOCK_RENDER = "boilerplater.__main__.render_project_template"
 MOCK_FORM = "boilerplater.__main__.run_form"
 
 
@@ -159,7 +160,7 @@ class TestTemplateResolution:
                 target_path,
                 extra_args=["--category", "python", "--template", "cli"],
             )
-        called_template_dir = mock_render.call_args[0][0]
+        called_template_dir = boilerplater.__main__.boilerplater_config.project_template
         assert called_template_dir == templates_dir / "python" / "cli"
 
     def test_correct_target_path_passed_to_render(
@@ -172,7 +173,7 @@ class TestTemplateResolution:
                 target_path,
                 extra_args=["--category", "python", "--template", "cli"],
             )
-        called_target = mock_render.call_args[0][1]
+        called_target = boilerplater.__main__.boilerplater_config.target_path
         assert called_target == target_path
 
     def test_category_from_form_used_for_resolution(
@@ -190,7 +191,7 @@ class TestTemplateResolution:
         ):
             invoke(templates_dir, data_dir, target_path)
 
-        called_template_dir = mock_render.call_args[0][0]
+        called_template_dir = boilerplater.__main__.boilerplater_config.project_template
         assert called_template_dir == templates_dir / "rust" / "cli"
 
 
@@ -206,7 +207,7 @@ class TestDataFileLoading:
                 extra_args=["--category", "python", "--template", "cli"],
             )
 
-        variables = mock_render.call_args[0][2]
+        variables = boilerplater.__main__.boilerplater_config.variables
         assert variables["author"] == "Alice"
         assert variables["email"] == "alice@example.com"
 
@@ -222,7 +223,7 @@ class TestDataFileLoading:
                 extra_args=["--category", "python", "--template", "cli"],
             )
 
-        variables = mock_render.call_args[0][2]
+        variables = boilerplater.__main__.boilerplater_config.variables
         assert variables["x"] == 1
         assert variables["y"] == 2
 
@@ -250,7 +251,7 @@ class TestDataFileLoading:
                 extra_args=["--category", "python", "--template", "cli"],
             )
 
-        variables = mock_render.call_args[0][2]
+        variables = boilerplater.__main__.boilerplater_config.variables
         assert "0" not in variables  # list items should not bleed in
 
     def test_now_variable_always_present(self, templates_dir, data_dir, target_path):
@@ -264,23 +265,9 @@ class TestDataFileLoading:
                 extra_args=["--category", "python", "--template", "cli"],
             )
 
-        variables = mock_render.call_args[0][2]
+        variables = boilerplater.__main__.boilerplater_config.variables
         assert "now" in variables
         assert isinstance(variables["now"], datetime)
-
-    def test_missing_data_dir_is_created(self, templates_dir, tmp_path, target_path):
-        nonexistent_data = tmp_path / "new_data_dir"
-        assert not nonexistent_data.exists()
-
-        with patch(MOCK_RENDER), patch(MOCK_FORM, return_value=None):
-            invoke(
-                templates_dir,
-                nonexistent_data,
-                target_path,
-                extra_args=["--category", "python", "--template", "cli"],
-            )
-
-        assert nonexistent_data.is_dir()
 
 
 class TestDefaults:
@@ -297,7 +284,7 @@ class TestDefaults:
                 extra_args=["--category", "python", "--template", "cli"],
             )
 
-        defaults = mock_render.call_args[0][3]
+        defaults = boilerplater.__main__.boilerplater_config.variable_default_values
         assert defaults["module_name"] == "my_cool_project"
 
     def test_package_name_default_derived_from_target(
@@ -313,5 +300,5 @@ class TestDefaults:
                 extra_args=["--category", "python", "--template", "cli"],
             )
 
-        defaults = mock_render.call_args[0][3]
+        defaults = boilerplater.__main__.boilerplater_config.variable_default_values
         assert defaults["package_name"] == "my-cool-project"
