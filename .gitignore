@@ -1,10 +1,14 @@
-
+/init.sh
+.todo.md
 *.tmp
-*.db
-/build/
-/dist/
-/sdist/
-/docs/
+.idea
+build/
+dist/
+sdist/
+/tests/fixtures/output/
+/extras/docs/site/
+
+# Source: https://github.com/github/gitignor
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -250,7 +254,3 @@ Sessionx.vim
 tags
 # Persistent undo
 [._]*.un~
-.todo.md
-
-
-
