@@ -7,6 +7,7 @@ from jinja2 import FileSystemLoader, TemplateSyntaxError
 from jinja2.environment import Environment, Template
 from jinja2.meta import find_undeclared_variables
 from jinja2.runtime import StrictUndefined
+from click import Choice
 
 
 logger = logging.getLogger(__name__)
@@ -27,8 +28,18 @@ class VariablePromptingEnvironment(Environment):
         undeclared variables when the default of jinja2.runtime.Undefined is used.
         """
         super().__init__(*args, **kwargs, undefined=StrictUndefined)
-        self.type_registry = {}
-        self.undeclared_variables = {}
+        self.type_registry: dict[str, type | object] = {}
+        """
+        Used to assign types to keys in self.undeclared_variables.
+        Is populated during pre-process, marking a variable as the found type. Type defaults to str if none is found.
+        """
+
+        self.undeclared_variables: dict[str, type] = {}
+        """
+        Used to produce Textual form fields, allowing the user to set the value for unset variables. 
+        Key is the variable name, value is the type of the variable which determines which form field 
+        and validator to use in the form.
+        """
 
     def preprocess(self, source, name=None, filename=None):
         """
@@ -52,8 +63,8 @@ class VariablePromptingEnvironment(Environment):
             var_type_str = var_type_str if var_name is not None else "str"
 
             if "Choice" == var_type_str.strip():
-                from click import Choice
-                self.type_registry[var_name] = eval(var_type_str+var_type_args)
+                choice_args = var_type_args.lstrip('[(').rstrip('])')
+                self.type_registry[var_name] = Choice(eval(choice_args))
 
                 continue
 
@@ -88,6 +99,9 @@ class VariablePromptingEnvironment(Environment):
         parent: Optional[str] = None,
         _globals: Optional[MutableMapping[str, Any]] = None,
     ) -> "Template":
+        """
+        Based on jinja2.Environment's original get_template method, adding the call to update_undeclared_variables.
+        """
         if isinstance(name, Template):
             return name
 
@@ -111,6 +125,9 @@ class VariablePromptingEnvironment(Environment):
         _globals: Optional[MutableMapping[str, Any]] = None,
         template_class: Optional[Type[Template]] = None,
     ) -> "Template":
+        """
+        Based on jinja2.Environment's original from_string method, adding the call to update_undeclared_variables.
+        """
         self.update_undeclared_variables(source)
         gs = self.make_globals(_globals)
         cls = template_class or self.template_class
