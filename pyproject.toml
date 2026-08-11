@@ -1,6 +1,6 @@
 [project]
 name = "boilerplater"
-version = "1.0.0"
+version = "1.0.1"
 description = "An interactive project boilerplate generator"
 readme = "README.md"
 license = "MIT"
