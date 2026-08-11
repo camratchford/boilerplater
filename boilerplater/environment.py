@@ -63,7 +63,7 @@ class VariablePromptingEnvironment(Environment):
             var_type_str = var_type_str if var_name is not None else "str"
 
             if "Choice" == var_type_str.strip():
-                choice_args = var_type_args.lstrip('[(').rstrip('])')
+                choice_args = var_type_args.lstrip('(').rstrip(')')
                 self.type_registry[var_name] = Choice(eval(choice_args))
 
                 continue
