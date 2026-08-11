@@ -153,7 +153,7 @@ class TestTemplateResolution:
     def test_correct_template_dir_passed_to_render(
         self, templates_dir, data_dir, target_path
     ):
-        with patch(MOCK_RENDER) as mock_render, patch(MOCK_FORM, return_value=None):
+        with patch(MOCK_RENDER), patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 data_dir,
@@ -166,7 +166,7 @@ class TestTemplateResolution:
     def test_correct_target_path_passed_to_render(
         self, templates_dir, data_dir, target_path
     ):
-        with patch(MOCK_RENDER) as mock_render, patch(MOCK_FORM, return_value=None):
+        with patch(MOCK_RENDER), patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 data_dir,
@@ -187,7 +187,7 @@ class TestTemplateResolution:
                     {"template": "cli"},
                 ],
             ),
-            patch(MOCK_RENDER) as mock_render,
+            patch(MOCK_RENDER),
         ):
             invoke(templates_dir, data_dir, target_path)
 
@@ -199,7 +199,7 @@ class TestDataFileLoading:
     def test_yaml_data_passed_as_variables(self, templates_dir, data_dir, target_path):
         (data_dir / "user.yaml").write_text("author: Alice\nemail: alice@example.com\n")
 
-        with patch(MOCK_RENDER) as mock_render, patch(MOCK_FORM, return_value=None):
+        with patch(MOCK_RENDER), patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 data_dir,
@@ -215,7 +215,7 @@ class TestDataFileLoading:
         (data_dir / "a.yaml").write_text("x: 1\n")
         (data_dir / "b.yaml").write_text("y: 2\n")
 
-        with patch(MOCK_RENDER) as mock_render, patch(MOCK_FORM, return_value=None):
+        with patch(MOCK_RENDER), patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 data_dir,
@@ -243,7 +243,7 @@ class TestDataFileLoading:
     def test_non_dict_yaml_ignored(self, templates_dir, data_dir, target_path):
         (data_dir / "list.yaml").write_text("- item1\n- item2\n")
 
-        with patch(MOCK_RENDER) as mock_render, patch(MOCK_FORM, return_value=None):
+        with patch(MOCK_RENDER), patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 data_dir,
@@ -257,7 +257,7 @@ class TestDataFileLoading:
     def test_now_variable_always_present(self, templates_dir, data_dir, target_path):
         from datetime import datetime
 
-        with patch(MOCK_RENDER) as mock_render, patch(MOCK_FORM, return_value=None):
+        with patch(MOCK_RENDER), patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 data_dir,
@@ -276,7 +276,7 @@ class TestDefaults:
     ):
         target = tmp_path / "my-cool-project"
 
-        with patch(MOCK_RENDER) as mock_render, patch(MOCK_FORM, return_value=None):
+        with patch(MOCK_RENDER), patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 data_dir,
@@ -292,7 +292,7 @@ class TestDefaults:
     ):
         target = tmp_path / "my-cool-project"
 
-        with patch(MOCK_RENDER) as mock_render, patch(MOCK_FORM, return_value=None):
+        with patch(MOCK_RENDER), patch(MOCK_FORM, return_value=None):
             invoke(
                 templates_dir,
                 data_dir,
