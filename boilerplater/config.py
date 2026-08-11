@@ -33,7 +33,7 @@ class LogLevel(str, Enum):
 class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
     config_file: Path = Path().cwd() / ".boilerplater.yml"
 
-    template_dir: Path | None = default_templates_dir.resolve()
+    templates_dir: Path | None = default_templates_dir.resolve()
     data_dir: Path | None = default_data_dir.resolve()
     modules_dir: Path | None = None
 
@@ -68,9 +68,14 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
     def __init__(self, **kwargs):
         # Prevent missing CLI params from overriding our defaults
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
-        super().__init__(**kwargs, env_prefix="BOILERPLATER", env_trim_prefix=True)
+        super().__init__(
+            **kwargs,
+            env_prefix="BOILERPLATER",
+            env_trim_prefix=True,
+            config_assign_attrs=False,
+        )
         if not self.modules_dir:
-            self.modules_dir = self.template_dir / "modules"
+            self.modules_dir = self.templates_dir / "modules"
         if self.config_file and self.config_file.exists():
             self.load_from_file(self.config_file)
 
@@ -115,6 +120,10 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
         return add_ons
 
     def load_modules(self):
+        if not self.modules_dir.is_dir():
+            logger.debug(f"Modules dir '{self.modules_dir}' does not exist. Skipping.")
+            return
+
         for module in self.modules_dir.iterdir():
             if module.name in self.module_configs:
                 continue
@@ -161,7 +170,8 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
 
     def load_variables(self):
         if not self.data_dir.resolve().is_dir():
-            raise FileNotFoundError(f"Data dir '{self.data_dir}' does not exist")
+            logger.debug(f"Data dir '{self.data_dir}' does not exist. Skipping.")
+            return
 
         for data_file in self.data_dir.iterdir():
             if data_file.suffix not in [".yml", ".yaml"]:
@@ -253,13 +263,13 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
         return requirements
 
     def list_categories(self):
-        return [category.name for category in self.template_dir.iterdir()]
+        return [category.name for category in self.templates_dir.iterdir()]
 
     def list_templates(self, with_category: str = None):
         if with_category and with_category in self.list_categories():
             return [
                 template.name
-                for template in self.template_dir.joinpath(with_category).iterdir()
+                for template in self.templates_dir.joinpath(with_category).iterdir()
             ]
 
         if not self.category:

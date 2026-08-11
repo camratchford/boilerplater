@@ -27,7 +27,7 @@ def get_templates_dir(ctx: Context):
         return None
 
     templates_dir = Path(
-        str(ctx.params.get("templates_dir", boilerplater_config.template_dir))
+        str(ctx.params.get("templates_dir", boilerplater_config.templates_dir))
     )
 
     if not templates_dir.resolve().is_dir():
@@ -137,11 +137,11 @@ def main(
         Option(
             "--templates-dir",
             help=f"Location of your project templates. "
-            f"[dim](default: {boilerplater_config.template_dir.as_posix()})",
+            f"[dim](default: {boilerplater_config.templates_dir.as_posix()})",
             dir_okay=True,
             # envvar="BOILERPLATER_TEMPLATE_DIR",
         ),
-    ] = boilerplater_config.template_dir,
+    ] = boilerplater_config.templates_dir,
     data_dir: Annotated[
         Path,
         Option(
@@ -200,14 +200,12 @@ def main(
     ] = boilerplater_config.dry_run,
 ):
 
-    boilerplater_config.update(
-        templates_dir=templates_dir,
-        data_dir=data_dir,
-        modules_dir=modules_dir,
-        target_path=target_path,
-        log_level=log_level,
-        dry_run=dry_run,
-    )
+    boilerplater_config.templates_dir = templates_dir
+    boilerplater_config.data_dir = data_dir
+    boilerplater_config.modules_dir = modules_dir
+    boilerplater_config.target_path = target_path
+    boilerplater_config.log_level = log_level
+    boilerplater_config.dry_run = dry_run
 
     logging.basicConfig(level=log_level.value, format="%(levelname)s: %(message)s")
 
