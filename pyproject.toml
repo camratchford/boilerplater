@@ -25,6 +25,7 @@ classifiers = [
 
 requires-python = '>=3.10'
 dependencies = [
+    "byoconfig",
     "jinja2",
     "typer",
     "click",
