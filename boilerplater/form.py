@@ -4,8 +4,8 @@ from typing import Any
 
 import click
 from textual import on
-from textual.binding import Binding
 from textual.app import App, ComposeResult
+from textual.binding import Binding
 from textual.containers import Horizontal, ScrollableContainer
 from textual.validation import Function
 from textual.widgets import (

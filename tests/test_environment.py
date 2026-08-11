@@ -1,12 +1,18 @@
 from jinja2 import FileSystemLoader
 
 from boilerplater.environment import VariablePromptingEnvironment
-from boilerplater.__main__ import boilerplater_config
 
 
-def make_env(tmp_path, start_str: str = "{{", end_str: str = "}}") -> VariablePromptingEnvironment:
-    variable_str_kwargs = {"variable_start_string": start_str, "variable_end_string": end_str}
-    return VariablePromptingEnvironment(loader=FileSystemLoader(str(tmp_path)), **variable_str_kwargs)
+def make_env(
+    tmp_path, start_str: str = "{{", end_str: str = "}}"
+) -> VariablePromptingEnvironment:
+    variable_str_kwargs = {
+        "variable_start_string": start_str,
+        "variable_end_string": end_str,
+    }
+    return VariablePromptingEnvironment(
+        loader=FileSystemLoader(str(tmp_path)), **variable_str_kwargs
+    )
 
 
 def write_template(tmp_path, name: str, content: str):
@@ -31,6 +37,7 @@ class TestTypeRegistry:
 
     def test_choice_type(self, tmp_path):
         from click import Choice
+
         env = make_env(tmp_path)
         env.preprocess("{{ x_enabled: Choice(['true', 'false']) }}")
         assert isinstance(env.type_registry["x_enabled"], Choice)
