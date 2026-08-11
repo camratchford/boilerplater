@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 from shutil import copy2
-from subprocess import run, PIPE
+from subprocess import PIPE, run
 
 from jinja2 import FileSystemLoader, Template
 from magic import from_file
@@ -11,7 +11,6 @@ from boilerplater.config import BoilerplaterConfig
 from boilerplater.environment import VariablePromptingEnvironment
 from boilerplater.form import run_form
 from boilerplater.template_config import BaseTemplateConfig
-
 
 boilerplater_config = BoilerplaterConfig()
 logger = logging.getLogger(__name__)
@@ -126,20 +125,22 @@ def execute_run_on_complete_scripts():
     for script in boilerplater_config.run_on_complete_scripts:
         script_path = boilerplater_config.target_path / script
         if not script_path.exists():
-            logger.warning(f'run_on_complete_scripts script {script_path} does not exist')
+            logger.warning(
+                f"run_on_complete_scripts script {script_path} does not exist"
+            )
             continue
         script_process = run(
             args=f"./{script}",
             cwd=boilerplater_config.target_path.as_posix(),
             text=True,
             stdout=PIPE,
-            stderr=PIPE
+            stderr=PIPE,
         )
         if script_process.returncode:
+            output = script_process.stdout or script_process.stderr or ""
             logger.warning(
-                f'run_on_complete_scripts script {script_path} exited with error code {script_process.returncode}: ' +
-                script_process.stdout if script_process.stdout else "" +
-                script_process.stderr if script_process.stderr else ""
+                f"run_on_complete_scripts script {script_path} exited with error "
+                f"code {script_process.returncode}: {output}"
             )
             return
 
@@ -148,11 +149,11 @@ def execute_run_on_complete_scripts():
 
 def cleanup_files_matching_cleanup_patterns():
     if boilerplater_config.project_template_config:
-        cleanup_paths = [
+        cleanup_paths = {
             file
             for pattern in boilerplater_config.cleanup_patterns
             for file in boilerplater_config.target_path.glob(pattern)
-        ]
+        }
         for file in cleanup_paths:
             file.unlink()
 

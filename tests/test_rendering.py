@@ -1,16 +1,19 @@
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
-import pytest
 from jinja2 import FileSystemLoader
 
 from boilerplater.__main__ import boilerplater_config
 from boilerplater.environment import VariablePromptingEnvironment
 from boilerplater.rendering import (
+    cleanup_files_matching_cleanup_patterns,
+    execute_run_on_complete_scripts,
     render_output_path,
     render_project_template,
     should_copy,
+    should_skip,
 )
+from boilerplater.template_config import ModuleTemplateConfig
 
 
 def make_env(tmp_path: Path) -> VariablePromptingEnvironment:
@@ -231,3 +234,218 @@ class TestRenderTemplateDirectory:
             boilerplater_config.project_template = src
             render_project_template()
         assert (out / "f.txt").read_text() == "42"
+
+    def test_dry_run_creates_no_output(self, tmp_path):
+        src = tmp_path / "src"
+        src.mkdir()
+        write(src / "hello.txt", "Hello {{ name }}")
+        write_bytes(src / "image.png", PNG_MAGIC)
+        out = tmp_path / "out"
+
+        boilerplater_config.category = tmp_path
+        boilerplater_config.target_path = out
+        boilerplater_config.project_template = src
+        boilerplater_config.variables = {"name": "world"}
+        boilerplater_config.dry_run = True
+        try:
+            render_project_template()
+        finally:
+            boilerplater_config.dry_run = False
+
+        assert not out.exists()
+
+    def test_requirements_rendered_alongside_project_template(self, tmp_path):
+        src = tmp_path / "src"
+        src.mkdir()
+        write(src / "main.txt", "primary")
+
+        module_src = tmp_path / "module_src"
+        module_src.mkdir()
+        write(module_src / "extra.txt", "extra")
+        out = tmp_path / "out"
+
+        boilerplater_config.category = tmp_path
+        boilerplater_config.target_path = out
+        boilerplater_config.project_template = src
+        boilerplater_config.requirements = [
+            ModuleTemplateConfig(name="mod", path=module_src)
+        ]
+        try:
+            render_project_template()
+        finally:
+            boilerplater_config.requirements = []
+
+        assert (out / "main.txt").read_text() == "primary"
+        assert (out / "extra.txt").read_text() == "extra"
+
+    def test_excluded_file_is_not_rendered(self, tmp_path):
+        src = tmp_path / "src"
+        src.mkdir()
+        write(src / "keep.txt", "kept")
+        write(src / "skip.txt", "skipped")
+        out = tmp_path / "out"
+
+        boilerplater_config.category = tmp_path
+        boilerplater_config.target_path = out
+        boilerplater_config.project_template = src
+        boilerplater_config.exclude_patterns = [
+            *boilerplater_config.exclude_patterns,
+            "skip.txt",
+        ]
+        try:
+            render_project_template()
+        finally:
+            boilerplater_config.exclude_patterns = []
+
+        assert (out / "keep.txt").exists()
+        assert not (out / "skip.txt").exists()
+
+    def test_cleanup_patterns_removed_after_render(self, tmp_path):
+        src = tmp_path / "src"
+        src.mkdir()
+        write(src / "main.txt", "content")
+        out = tmp_path / "out"
+        out.mkdir()
+        (out / ".placeholder").touch()
+
+        boilerplater_config.category = tmp_path
+        boilerplater_config.target_path = out
+        boilerplater_config.project_template = src
+        render_project_template()
+
+        assert not (out / ".placeholder").exists()
+        assert (out / "main.txt").exists()
+
+    def test_run_on_complete_scripts_invoked_after_render(self, tmp_path):
+        src = tmp_path / "src"
+        src.mkdir()
+        write(src / "main.txt", "content")
+        out = tmp_path / "out"
+
+        boilerplater_config.category = tmp_path
+        boilerplater_config.target_path = out
+        boilerplater_config.project_template = src
+        with patch(
+            "boilerplater.rendering.execute_run_on_complete_scripts"
+        ) as mock_run_scripts:
+            render_project_template()
+
+        mock_run_scripts.assert_called_once_with()
+
+
+class TestShouldSkip:
+    def teardown_method(self):
+        boilerplater_config.project_template_config = None
+        boilerplater_config.exclude_patterns = []
+
+    def test_no_project_template_config_returns_falsy(self, tmp_path):
+        boilerplater_config.project_template_config = None
+        f = tmp_path / "boilerplater.yml"
+        assert not should_skip(f)
+
+    def test_file_matching_exclude_pattern(self, tmp_path):
+        f = write(tmp_path / "boilerplater.yml", "name: test")
+        boilerplater_config.project_template_config = MagicMock()
+        boilerplater_config.exclude_patterns = ["boilerplater.yml"]
+        assert should_skip(f) is True
+
+    def test_file_not_matching_exclude_pattern(self, tmp_path):
+        f = write(tmp_path / "main.py", "print(1)")
+        boilerplater_config.project_template_config = MagicMock()
+        boilerplater_config.exclude_patterns = ["boilerplater.yml"]
+        assert should_skip(f) is False
+
+
+class TestCleanupFilesMatchingCleanupPatterns:
+    def teardown_method(self):
+        boilerplater_config.project_template_config = None
+        boilerplater_config.cleanup_patterns = []
+
+    def test_matching_files_are_removed(self, tmp_path):
+        write(tmp_path / ".placeholder", "")
+        boilerplater_config.project_template_config = MagicMock()
+        boilerplater_config.cleanup_patterns = [".placeholder"]
+        boilerplater_config.target_path = tmp_path
+
+        cleanup_files_matching_cleanup_patterns()
+
+        assert not (tmp_path / ".placeholder").exists()
+
+    def test_non_matching_files_are_kept(self, tmp_path):
+        write(tmp_path / "keep.txt", "content")
+        boilerplater_config.project_template_config = MagicMock()
+        boilerplater_config.cleanup_patterns = [".placeholder"]
+        boilerplater_config.target_path = tmp_path
+
+        cleanup_files_matching_cleanup_patterns()
+
+        assert (tmp_path / "keep.txt").exists()
+
+    def test_no_project_template_config_skips_cleanup(self, tmp_path):
+        write(tmp_path / ".placeholder", "")
+        boilerplater_config.project_template_config = None
+        boilerplater_config.cleanup_patterns = [".placeholder"]
+        boilerplater_config.target_path = tmp_path
+
+        cleanup_files_matching_cleanup_patterns()
+
+        assert (tmp_path / ".placeholder").exists()
+
+
+class TestExecuteRunOnCompleteScripts:
+    def teardown_method(self):
+        boilerplater_config.run_on_complete_scripts = []
+
+    def test_missing_script_is_skipped_with_warning(self, tmp_path, caplog):
+        boilerplater_config.target_path = tmp_path
+        boilerplater_config.run_on_complete_scripts = [Path("does_not_exist.sh")]
+
+        with caplog.at_level("WARNING"):
+            execute_run_on_complete_scripts()
+
+        assert "does not exist" in caplog.text
+
+    def test_successful_script_output_is_printed(self, tmp_path, capsys):
+        script = write(tmp_path / "post.sh", "#!/bin/sh\necho done\n", mode=0o755)
+        boilerplater_config.target_path = tmp_path
+        boilerplater_config.run_on_complete_scripts = [Path(script.name)]
+
+        execute_run_on_complete_scripts()
+
+        assert "done" in capsys.readouterr().out
+
+    def test_failing_script_logs_warning(self, tmp_path, caplog):
+        write(tmp_path / "post.sh", "#!/bin/sh\necho boom\nexit 1\n", mode=0o755)
+        boilerplater_config.target_path = tmp_path
+        boilerplater_config.run_on_complete_scripts = [Path("post.sh")]
+
+        with caplog.at_level("WARNING"):
+            execute_run_on_complete_scripts()
+
+        assert "exited with error code" in caplog.text
+        assert "boom" in caplog.text
+
+    def test_failing_script_with_no_output_still_logs_prefix(self, tmp_path, caplog):
+        write(tmp_path / "post.sh", "#!/bin/sh\nexit 1\n", mode=0o755)
+        boilerplater_config.target_path = tmp_path
+        boilerplater_config.run_on_complete_scripts = [Path("post.sh")]
+
+        with caplog.at_level("WARNING"):
+            execute_run_on_complete_scripts()
+
+        assert "exited with error code" in caplog.text
+
+    def test_all_scripts_run_in_sequence(self, tmp_path, capsys):
+        write(tmp_path / "first.sh", "#!/bin/sh\necho first\n", mode=0o755)
+        write(tmp_path / "second.sh", "#!/bin/sh\necho second\n", mode=0o755)
+        boilerplater_config.target_path = tmp_path
+        boilerplater_config.run_on_complete_scripts = [
+            Path("first.sh"),
+            Path("second.sh"),
+        ]
+
+        execute_run_on_complete_scripts()
+
+        out = capsys.readouterr().out
+        assert "first" in out
+        assert "second" in out

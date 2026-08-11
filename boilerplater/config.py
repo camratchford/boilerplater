@@ -9,12 +9,12 @@ from byoconfig import Config
 from byoconfig.singleton import SingletonMetaclass
 from slugify import slugify
 
+from boilerplater.form import run_form
 from boilerplater.template_config import (
+    BaseTemplateConfig,
     ModuleTemplateConfig,
     ProjectTemplateConfig,
-    BaseTemplateConfig,
 )
-from boilerplater.form import run_form
 
 logger = logging.getLogger(__name__)
 home = Path().home()
@@ -116,6 +116,9 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
 
     def load_modules(self):
         for module in self.modules_dir.iterdir():
+            if module.name in self.module_configs:
+                continue
+
             module_config_file = module / "boilerplater.yml"
             if not module_config_file.is_file():
                 continue
@@ -132,10 +135,18 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
                 **module_data,
                 path=module,
             )
-            self.exclude_patterns.extend(self.module_configs[module.name].exclude_patterns)
-            self.force_copy_patterns.extend(self.module_configs[module.name].force_copy_patterns)
-            self.cleanup_patterns.extend(self.module_configs[module.name].cleanup_patterns)
-            self.run_on_complete_scripts.extend(self.module_configs[module.name].run_on_complete_scripts)
+            self.exclude_patterns.extend(
+                self.module_configs[module.name].exclude_patterns
+            )
+            self.force_copy_patterns.extend(
+                self.module_configs[module.name].force_copy_patterns
+            )
+            self.cleanup_patterns.extend(
+                self.module_configs[module.name].cleanup_patterns
+            )
+            self.run_on_complete_scripts.extend(
+                self.module_configs[module.name].run_on_complete_scripts
+            )
 
     def load_defaults(self):
         default_package_name = self.target_path.stem
@@ -168,7 +179,7 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
             level_str = logging.getLevelName(level)
             # The 'level not found' return according to
             # https://docs.python.org/3.14/library/logging.html#logging.getLevelName
-            if not level_str.startswith('Level '):
+            if not level_str.startswith("Level "):
                 self._log_level = LogLevel.__members__[level_str.lower()]
         elif isinstance(level, str):
             self._log_level = LogLevel.__members__[level.lower()]
@@ -176,8 +187,10 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
             self._log_level = level
         else:
             # I would show them a warning, but the logger isn't intialized yet.
-            print(f"Invalid type for log level '{str(level)}': {type(level)}. "
-                  f"Acceptable types are int, str, and {type(LogLevel.info)}")
+            print(
+                f"Invalid type for log level '{str(level)}': {type(level)}. "
+                f"Acceptable types are int, str, and {type(LogLevel.info)}"
+            )
 
     @property
     def project_template(self):
@@ -198,9 +211,13 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
             category=self.category.name,
         )
         self.exclude_patterns.extend(self.project_template_config.exclude_patterns)
-        self.force_copy_patterns.extend(self.project_template_config.force_copy_patterns)
+        self.force_copy_patterns.extend(
+            self.project_template_config.force_copy_patterns
+        )
         self.cleanup_patterns.extend(self.project_template_config.cleanup_patterns)
-        self.run_on_complete_scripts.extend(self.project_template_config.run_on_complete_scripts)
+        self.run_on_complete_scripts.extend(
+            self.project_template_config.run_on_complete_scripts
+        )
 
         self.project_template_config.requirements.extend(self.load_add_ons())
         self.requirements.extend(self.get_requirements(self.project_template_config))
