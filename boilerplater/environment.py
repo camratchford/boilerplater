@@ -1,14 +1,13 @@
 import builtins
-import re
 import logging
+import re
 from typing import Any, MutableMapping, Optional, Type, Union
 
+from click import Choice
 from jinja2 import FileSystemLoader, TemplateSyntaxError
 from jinja2.environment import Environment, Template
 from jinja2.meta import find_undeclared_variables
 from jinja2.runtime import StrictUndefined
-from click import Choice
-
 
 logger = logging.getLogger(__name__)
 
@@ -56,14 +55,24 @@ class VariablePromptingEnvironment(Environment):
         var_pattern = r"(\w+)"
         type_pattern = r"(\w+)"
         type_args_pattern = r"([\(\[]\[.+\][\)\]])"
-        match_pattern = start_string + r"\s*" + var_pattern + r"\s*:\s*" + type_pattern + r"\s*" + type_args_pattern + r"\s*" + end_string
+        match_pattern = (
+            start_string
+            + r"\s*"
+            + var_pattern
+            + r"\s*:\s*"
+            + type_pattern
+            + r"\s*(?:"
+            + type_args_pattern
+            + r")?\s*"
+            + end_string
+        )
 
         for match in re.finditer(match_pattern, source):
             var_name, var_type_str, var_type_args = match.groups()
             var_type_str = var_type_str if var_name is not None else "str"
 
             if "Choice" == var_type_str.strip():
-                choice_args = var_type_args.lstrip('(').rstrip(')')
+                choice_args = var_type_args.lstrip("(").rstrip(")")
                 self.type_registry[var_name] = Choice(eval(choice_args))
 
                 continue
