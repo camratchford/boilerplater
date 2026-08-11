@@ -139,7 +139,7 @@ def main(
             help=f"Location of your project templates. "
             f"[dim](default: {boilerplater_config.template_dir.as_posix()})",
             dir_okay=True,
-            envvar="BOILERPLATER_TEMPLATE_DIR",
+            # envvar="BOILERPLATER_TEMPLATE_DIR",
         ),
     ] = boilerplater_config.template_dir,
     data_dir: Annotated[
@@ -149,7 +149,7 @@ def main(
             help="Location of your YAML variable files. "
             f"[dim](default: {boilerplater_config.data_dir.as_posix()})",
             dir_okay=True,
-            envvar="BOILERPLATER_DATA_DIR",
+            # envvar="BOILERPLATER_DATA_DIR",
         ),
     ] = boilerplater_config.data_dir,
     modules_dir: Annotated[
@@ -159,7 +159,7 @@ def main(
             help="Location of template modules. "
             f"[dim](default: {boilerplater_config.modules_dir.as_posix()})",
             dir_okay=True,
-            envvar="BOILERPLATER_MODULES_DIR",
+            # envvar="BOILERPLATER_MODULES_DIR",
         ),
     ] = boilerplater_config.modules_dir,
     category: Annotated[

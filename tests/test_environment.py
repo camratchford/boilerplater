@@ -1,10 +1,12 @@
 from jinja2 import FileSystemLoader
 
 from boilerplater.environment import VariablePromptingEnvironment
+from boilerplater.__main__ import boilerplater_config
 
 
-def make_env(tmp_path) -> VariablePromptingEnvironment:
-    return VariablePromptingEnvironment(loader=FileSystemLoader(str(tmp_path)))
+def make_env(tmp_path, start_str: str = "{{", end_str: str = "}}") -> VariablePromptingEnvironment:
+    variable_str_kwargs = {"variable_start_string": start_str, "variable_end_string": end_str}
+    return VariablePromptingEnvironment(loader=FileSystemLoader(str(tmp_path)), **variable_str_kwargs)
 
 
 def write_template(tmp_path, name: str, content: str):
@@ -21,6 +23,17 @@ class TestTypeRegistry:
         env = make_env(tmp_path)
         env.preprocess("{{ count: int }}")
         assert env.type_registry["count"] is int
+
+    def test_typed_variable_works_when_var_string_is_changed(self, tmp_path):
+        env = make_env(tmp_path, start_str="{&", end_str="&}")
+        env.preprocess("{& count: int &}")
+        assert env.type_registry["count"] is int
+
+    def test_choice_type(self, tmp_path):
+        from click import Choice
+        env = make_env(tmp_path)
+        env.preprocess("{{ x_enabled: Choice(['true', 'false']) }}")
+        assert isinstance(env.type_registry["x_enabled"], Choice)
 
     def test_all_builtin_types_resolve(self, tmp_path):
         env = make_env(tmp_path)

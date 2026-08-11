@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 from shutil import copy2
+from subprocess import run, PIPE
 
 from jinja2 import FileSystemLoader, Template
 from magic import from_file
@@ -30,7 +31,7 @@ def should_copy(path: Path) -> bool:
     if boilerplater_config.project_template_config:
         force_copy_paths = [
             file
-            for pattern in boilerplater_config.project_template_config.force_copy_patterns
+            for pattern in boilerplater_config.force_copy_patterns
             for file in path.parent.glob(pattern)
         ]
 
@@ -56,7 +57,7 @@ def should_skip(path: Path):
     if boilerplater_config.project_template_config:
         return path in [
             file
-            for pattern in boilerplater_config.project_template_config.exclude_patterns
+            for pattern in boilerplater_config.exclude_patterns
             for file in path.parent.glob(pattern)
         ]
     return []
@@ -121,6 +122,41 @@ def render_template_data(
     return payload_data
 
 
+def execute_run_on_complete_scripts():
+    for script in boilerplater_config.run_on_complete_scripts:
+        script_path = boilerplater_config.target_path / script
+        if not script_path.exists():
+            logger.warning(f'run_on_complete_scripts script {script_path} does not exist')
+            continue
+        script_process = run(
+            args=f"./{script}",
+            cwd=boilerplater_config.target_path.as_posix(),
+            text=True,
+            stdout=PIPE,
+            stderr=PIPE
+        )
+        if script_process.returncode:
+            logger.warning(
+                f'run_on_complete_scripts script {script_path} exited with error code {script_process.returncode}: ' +
+                script_process.stdout if script_process.stdout else "" +
+                script_process.stderr if script_process.stderr else ""
+            )
+            return
+
+        print(script_process.stdout)
+
+
+def cleanup_files_matching_cleanup_patterns():
+    if boilerplater_config.project_template_config:
+        cleanup_paths = [
+            file
+            for pattern in boilerplater_config.cleanup_patterns
+            for file in boilerplater_config.target_path.glob(pattern)
+        ]
+        for file in cleanup_paths:
+            file.unlink()
+
+
 def render_project_template():
     template_list = [
         boilerplater_config.project_template_config
@@ -153,3 +189,6 @@ def render_project_template():
 
         output_path.write_text(output_data.subtemplate.render(), encoding="utf-8")
         output_path.chmod(mode=output_data.subtemplate_path.stat().st_mode)
+
+    execute_run_on_complete_scripts()
+    cleanup_files_matching_cleanup_patterns()

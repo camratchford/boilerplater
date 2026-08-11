@@ -1,11 +1,15 @@
 import builtins
 import re
+import logging
 from typing import Any, MutableMapping, Optional, Type, Union
 
-from jinja2 import FileSystemLoader
+from jinja2 import FileSystemLoader, TemplateSyntaxError
 from jinja2.environment import Environment, Template
 from jinja2.meta import find_undeclared_variables
 from jinja2.runtime import StrictUndefined
+
+
+logger = logging.getLogger(__name__)
 
 
 class VariablePromptingEnvironment(Environment):
@@ -38,17 +42,21 @@ class VariablePromptingEnvironment(Environment):
         # In case it's not '{{' and '}}', we need to escape them because they probably still contain braces
         start_string = "".join(["\\" + char for char in self.variable_start_string])
         end_string = "".join(["\\" + char for char in self.variable_end_string])
-        type_pattern = start_string + r"s*(\w+)\s*:\s*(\w+)\s*" + end_string
-        """
-        Matches '{{ $var_name : $type_name }}' where:
-          - '{{' and '}}' are self.variable_start_string and self.variable_end_string respectively
-          - '$var_name', '$type_name' are any word 
-          - whitespace is optional
-        """
+        var_pattern = r"(\w+)"
+        type_pattern = r"(\w+)"
+        type_args_pattern = r"([\(\[]\[.+\][\)\]])"
+        match_pattern = start_string + r"\s*" + var_pattern + r"\s*:\s*" + type_pattern + r"\s*" + type_args_pattern + r"\s*" + end_string
 
-        for match in re.finditer(type_pattern, source):
-            var_name, var_type_str = match.groups()
+        for match in re.finditer(match_pattern, source):
+            var_name, var_type_str, var_type_args = match.groups()
             var_type_str = var_type_str if var_name is not None else "str"
+
+            if "Choice" == var_type_str.strip():
+                from click import Choice
+                self.type_registry[var_name] = eval(var_type_str+var_type_args)
+
+                continue
+
             var_type = (
                 getattr(builtins, var_type_str)
                 if hasattr(builtins, var_type_str)
@@ -57,10 +65,11 @@ class VariablePromptingEnvironment(Environment):
             self.type_registry[var_name] = var_type
 
         clean_source = re.sub(
-            type_pattern,
-            rf"{self.variable_start_string} \1 {self.variable_start_string}",
+            match_pattern,
+            rf"{self.variable_start_string} \1 {self.variable_end_string}",
             source,
         )
+
         return super().preprocess(clean_source, name, filename)
 
     def update_undeclared_variables(self, source: str):
@@ -86,7 +95,12 @@ class VariablePromptingEnvironment(Environment):
             name: str = self.join_path(name, parent)
 
         source, _, _ = self.loader.get_source(self, name)
-        self.update_undeclared_variables(source)
+
+        try:
+            self.update_undeclared_variables(source)
+        except TemplateSyntaxError as e:
+            logger.error(f"Syntax error at: {name}:{e.lineno}")
+            raise e
 
         template = self._load_template(name, _globals)
         return template
