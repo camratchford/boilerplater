@@ -117,11 +117,6 @@ def prompt_for_missing_cli_params(category: str, template: str):
         raise SystemExit(1)
 
 
-# Todo: Add
-#  --list-categories - A tree of the categories and templates
-#  --list-modules    - A table
-#  --get-module
-#  --get-template
 @cli.command()
 def main(
     target_path: Annotated[Path, Argument(dir_okay=True)],
@@ -139,7 +134,6 @@ def main(
             help=f"Location of your project templates. "
             f"[dim](default: {boilerplater_config.templates_dir.as_posix()})",
             dir_okay=True,
-            # envvar="BOILERPLATER_TEMPLATE_DIR",
         ),
     ] = boilerplater_config.templates_dir,
     data_dir: Annotated[
@@ -149,15 +143,13 @@ def main(
             help="Location of your YAML variable files. "
             f"[dim](default: {boilerplater_config.data_dir.as_posix()})",
             dir_okay=True,
-            # envvar="BOILERPLATER_DATA_DIR",
         ),
     ] = boilerplater_config.data_dir,
     modules_dir: Annotated[
         Path,
         Option(
             "--modules-dir",
-            help="Location of template modules. "
-            f"[dim](default: {boilerplater_config.modules_dir.as_posix()})",
+            help="Location of template modules. ",
             dir_okay=True,
             # envvar="BOILERPLATER_MODULES_DIR",
         ),
@@ -183,6 +175,16 @@ def main(
             dir_okay=True,
         ),
     ] = None,
+    config_file: Annotated[
+        Path | None,
+        Option(
+            "-C",
+            "--config-file",
+            help="Location of the boilerplater config file",
+            dir_okay=False,
+            file_okay=True,
+        ),
+    ] = Path().cwd() / ".boilerplater.yml",
     log_level: Annotated[
         LogLevel | None,
         Option(
@@ -199,6 +201,9 @@ def main(
         ),
     ] = boilerplater_config.dry_run,
 ):
+    boilerplater_config.config_file = config_file if config_file.exists() else None
+    if boilerplater_config.config_file and boilerplater_config.config_file.exists():
+        boilerplater_config.load_from_file(boilerplater_config.config_file)
 
     boilerplater_config.templates_dir = templates_dir
     boilerplater_config.data_dir = data_dir

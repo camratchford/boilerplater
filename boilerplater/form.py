@@ -283,15 +283,14 @@ def run_form(
     Launch the Textual form and return the filled values dict.
 
     Args:
-        variables: Mapping of variable_name -> type.  Duplicate keys are
-                   collapsed automatically (last definition wins, preserving
-                   insertion order of first occurrence).
+        variables: Mapping of variable_name -> type.  Duplicate keys are collapsed automatically
+                   (last definition wins, preserving insertion order of first occurrence).
         defaults:  Optional mapping of variable_name -> default value.
                    Pre-fills the corresponding widget; user can override.
+        title:     Shown at the top of the TUI window to provide users with additional context
 
     Returns:
-        A dict of {variable_name: coerced_value}, or None if the user
-        cancelled.
+        A dict of {variable_name: coerced_value}, or None if the user cancelled.
     """
 
     seen_variables: dict[str, Any] = {}
