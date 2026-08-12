@@ -149,8 +149,7 @@ def main(
         Path,
         Option(
             "--modules-dir",
-            help="Location of template modules. "
-            f"[dim](default: {boilerplater_config.modules_dir.as_posix()})",
+            help="Location of template modules. ",
             dir_okay=True,
             # envvar="BOILERPLATER_MODULES_DIR",
         ),
