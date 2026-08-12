@@ -31,7 +31,7 @@ interactively through a terminal form.
 
 
 - **Interactive TUI form** 
-  - Prompts for any undeclared variables using a clean [Textual](https://github.com/Textualize/textual TUI
+  - Prompts for any undeclared variables using a clean [Textual](https://github.com/Textualize/textual) TUI
   - Annotate variables with PEP 484-style type hints (`{{ count: int }}`) for type-based input validation
 - **YAML data files** 
   - Pre-supply common variables (author name, email, etc.)
