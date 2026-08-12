@@ -117,11 +117,6 @@ def prompt_for_missing_cli_params(category: str, template: str):
         raise SystemExit(1)
 
 
-# Todo: Add
-#  --list-categories - A tree of the categories and templates
-#  --list-modules    - A table
-#  --get-module
-#  --get-template
 @cli.command()
 def main(
     target_path: Annotated[Path, Argument(dir_okay=True)],
@@ -183,6 +178,16 @@ def main(
             dir_okay=True,
         ),
     ] = None,
+    config_file: Annotated[
+        Path | None,
+        Option(
+            "-C",
+            "--config-file",
+            help="Location of the boilerplater config file",
+            dir_okay=False,
+            file_okay=True,
+        ),
+    ] = Path().cwd() / ".boilerplater.yml",
     log_level: Annotated[
         LogLevel | None,
         Option(
@@ -199,6 +204,9 @@ def main(
         ),
     ] = boilerplater_config.dry_run,
 ):
+    boilerplater_config.config_file = config_file if config_file.exists() else None
+    if boilerplater_config.config_file and boilerplater_config.config_file.exists():
+        boilerplater_config.load_from_file(boilerplater_config.config_file)
 
     boilerplater_config.templates_dir = templates_dir
     boilerplater_config.data_dir = data_dir

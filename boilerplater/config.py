@@ -31,26 +31,28 @@ class LogLevel(str, Enum):
 
 
 class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
-    config_file: Path = Path().cwd() / ".boilerplater.yml"
-
+    config_file: Path = None
     templates_dir: Path | None = default_templates_dir.resolve()
     data_dir: Path | None = default_data_dir.resolve()
     modules_dir: Path | None = None
-
     _log_level: LogLevel = LogLevel.info
     dry_run: bool = False
-
     target_path: Path | None = None
     category: Path | None = None
-    template_path: Path | None = None
+    template: Path | None = None
 
-    # Certain projects need to override these (Any other template system that adopts Jinja2's style)
     jinja2_block_start_string: str = "{%"
     jinja2_block_end_string: str = "%}"
-    jinja2_variable_start_string: str = "{{"  #  {&  &} seem to work for Helm
+    jinja2_variable_start_string: str = "{{"
     jinja2_variable_end_string: str = "}}"
     jinja2_comment_start_string: str = "{#"
     jinja2_comment_end_string: str = "#}"
+    jinja2_line_statement_prefix: str = None
+    jinja2_line_comment_prefix: str = None
+    jinja2_trim_blocks: bool = False
+    jinja2_lstrip_blocks: bool = False
+    jinja2_newline_sequence: str = "\n"
+    jinja2_keep_trailing_newline: bool = False
 
     module_configs: dict[str, ModuleTemplateConfig] | None = {}
     project_template_config: ProjectTemplateConfig | None = None
@@ -74,10 +76,8 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
             env_trim_prefix=True,
             config_assign_attrs=False,
         )
-        if not self.modules_dir:
+        if not self.modules_dir and self.templates_dir.joinpath("modules").exists():
             self.modules_dir = self.templates_dir / "modules"
-        if self.config_file and self.config_file.exists():
-            self.load_from_file(self.config_file)
 
     def load_yaml(self, path: Path) -> dict[str, Any]:
         if not path.is_file():
@@ -204,7 +204,7 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
 
     @property
     def project_template(self):
-        return self.template_path
+        return self.template
 
     @project_template.setter
     def project_template(self, template_path: Path):
@@ -212,12 +212,12 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
         self.load_variables()
         self.load_modules()
 
-        self.template_path = template_path
-        template_config_data = self.load_yaml(self.template_path / "boilerplater.yml")
+        self.template = template_path
+        template_config_data = self.load_yaml(self.template / "boilerplater.yml")
         self.project_template_config = ProjectTemplateConfig(
-            name=self.template_path.name,  # Goes first so it can be overwritten by template_config_data
+            name=self.template.name,  # Goes first so it can be overwritten by template_config_data
             **template_config_data,
-            path=self.template_path,
+            path=self.template,
             category=self.category.name,
         )
         self.exclude_patterns.extend(self.project_template_config.exclude_patterns)

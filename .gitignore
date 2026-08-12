@@ -2,14 +2,11 @@
 .todo.md
 *.tmp
 .idea
-build/
-dist/
-sdist/
-*.egg-info
+/build/
+/dist/
+/sdist/
 /tests/fixtures/output/
 /extras/docs/site/
-
-# Source: https://github.com/github/gitignor
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
