@@ -5,6 +5,7 @@
 build/
 dist/
 sdist/
+*.egg-info
 /tests/fixtures/output/
 /extras/docs/site/
 
