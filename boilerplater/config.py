@@ -80,7 +80,7 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
             self.modules_dir = self.templates_dir / "modules"
 
     def load_yaml(self, path: Path) -> dict[str, Any]:
-        if not path.is_file():
+        if path is None or not path.is_file():
             return {}
 
         try:
@@ -120,7 +120,7 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
         return add_ons
 
     def load_modules(self):
-        if not self.modules_dir.is_dir():
+        if not self.modules_dir or not self.modules_dir.is_dir():
             logger.debug(f"Modules dir '{self.modules_dir}' does not exist. Skipping.")
             return
 
@@ -169,7 +169,9 @@ class BoilerplaterConfig(Config, metaclass=SingletonMetaclass):
         self.variable_default_values = defaults
 
     def load_variables(self):
-        if not self.data_dir.resolve().is_dir():
+        if not self.data_dir:
+            return
+        if not self.data_dir.is_dir():
             logger.debug(f"Data dir '{self.data_dir}' does not exist. Skipping.")
             return
 
